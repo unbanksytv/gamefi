@@ -67,7 +67,7 @@ public class Web3 : MonoBehaviour
         return await GetKartNFTCollection().ERC1155.GetOwned(address);
     }
 
-    public async void DisplayOwnedNFTs(List<NFT> nfts)
+    public void DisplayOwnedNFTs(List<NFT> nfts)
     {
         // Display NFTs on the UI
         // If Owns token 0, show "KartClassic_Player" GameObject
