@@ -85,10 +85,11 @@ public class GameFlowManager : MonoBehaviour
     async void OnEnable()
     {
         sdk = new ThirdwebSDK("optimism-goerli");
-        string address = await sdk.wallet.Connect();
 
         Contract nftCollection =
             sdk.GetContract("0x1Cd921cC9B802929a161193b2D614f962881968B"); // NFT Drop
+
+        string address = await sdk.wallet.Connect();
 
         // Check balance of token ID 0 and token ID 1
         var bals = await nftCollection.ERC1155.GetOwned(address);
