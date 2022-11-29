@@ -1,6 +1,5 @@
 using System.Collections;
 using KartGame.KartSystems;
-using Thirdweb;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
@@ -70,8 +69,6 @@ public class GameFlowManager : MonoBehaviour
 
     float elapsedTimeBeforeEndScene = 0;
 
-    private ThirdwebSDK sdk;
-
     public GameObject defaultPrefab;
 
     public GameObject roadsterPrefab;
@@ -82,21 +79,10 @@ public class GameFlowManager : MonoBehaviour
 
     // Whenever this scene becomes active, the Start() method is called.
     // This is the first method that is called when the scene is loaded.
-    async void OnEnable()
+    void OnEnable()
     {
-        sdk = new ThirdwebSDK("optimism-goerli");
-
-        Contract nftCollection =
-            sdk.GetContract("0x1Cd921cC9B802929a161193b2D614f962881968B"); // NFT Drop
-
-        string address = await sdk.wallet.Connect();
-
-        // Check balance of token ID 0 and token ID 1
-        var bals = await nftCollection.ERC1155.GetOwned(address);
-        bool ownsTokenZero = bals.Exists(nft => nft.metadata.id == "0");
-        bool ownsTokenOne = bals.Exists(nft => nft.metadata.id == "1");
-
-        GameObject prefab = ownsTokenOne ? roadsterPrefab : defaultPrefab;
+        GameObject prefab =
+            Web3.selectedKart == "1" ? roadsterPrefab : defaultPrefab;
         Instantiate(prefab,
         new Vector3(15.98891f, 0.2500009f, 3.105524f),
         transform.rotation);
