@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using Thirdweb;
 using UnityEngine;
 
@@ -31,7 +29,7 @@ public class TokenClaimer : MonoBehaviour
     public async void Claim()
     {
         await sdk.wallet.Connect();
-        sdk.wallet.SwitchNetwork(420);
+        await sdk.wallet.SwitchNetwork(420);
         await getTokenDrop().ERC20.Claim("25");
 
         // hide claim button

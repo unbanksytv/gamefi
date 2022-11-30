@@ -1,6 +1,9 @@
 /// --- Thirdweb Brige ---
 import { ethers } from "./ethers.js";
-import { ThirdwebSDK } from "https://esm.sh/@thirdweb-dev/sdk@nightly?bundle";
+import { ThirdwebSDK } from "https://esm.sh/@thirdweb-dev/sdk?bundle";
+
+const separator = "/";
+const subSeparator = "#";
 
 // big number transform
 const bigNumberReplacer = (key, value) => {
@@ -25,56 +28,59 @@ w.bridge.initialize = (chain, options) => {
   w.thirdweb = sdk;
 };
 
+const updateSDKSigner = () => {
+  if (w.thirdweb) {
+    const provider = new ethers.providers.Web3Provider(w.ethereum);
+    w.thirdweb.updateSignerOrProvider(provider.getSigner());
+  }
+};
+
 w.bridge.connect = async () => {
   if (w.ethereum) {
     await w.ethereum.enable;
     const provider = new ethers.providers.Web3Provider(w.ethereum);
     await provider.send("eth_requestAccounts", []);
     if (w.thirdweb) {
-      w.thirdweb.updateSignerOrProvider(provider.getSigner());
+      updateSDKSigner();
       w.ethereum.on("accountsChanged", async (accounts) => {
-        w.thirdweb.updateSignerOrProvider(provider.getSigner());
+        updateSDKSigner();
       });
       w.ethereum.on("chainChanged", async (chain) => {
-        w.thirdweb.updateSignerOrProvider(provider.getSigner());
+        updateSDKSigner();
       });
       return await w.thirdweb.wallet.getAddress();
     } else {
-      console.error("window.thirdweb is not defined");
-      return null;
+      throw "window.thirdweb is not defined";
     }
   } else {
-    console.error("Please install a wallet browser extension");
-    return null;
+    throw "Please install a wallet browser extension";
   }
 };
 
 w.bridge.switchNetwork = async (chainId) => {
-  try {
-    if (chainId) {
-      await window.ethereum.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: "0x" + chainId.toString(16) }],
-      });
-    } else {
-      console.error("Error switrching network");
-      return null;
-    }
-  } catch (e) {
-    console.error("Error switrching network", e);
-    return null;
+  if (chainId) {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: "0x" + chainId.toString(16) }],
+    });
+    updateSDKSigner();
+  } else {
+    throw "Error Switching Network";
   }
 };
 
 w.bridge.invoke = async (route, payload) => {
-  const routeArgs = route.split(".");
-  const firstArg = routeArgs[0].split("#");
+  const routeArgs = route.split(separator);
+  const firstArg = routeArgs[0].split(subSeparator);
   const addrOrSDK = firstArg[0];
 
   const fnArgs = JSON.parse(payload).arguments;
   const parsedArgs = fnArgs.map((arg) => {
     try {
-      return JSON.parse(arg);
+      return typeof arg === "string" &&
+        (arg.startsWith("{") || arg.startsWith("["))
+        ? JSON.parse(arg)
+        : arg;
     } catch (e) {
       return arg;
     }
@@ -90,9 +96,11 @@ w.bridge.invoke = async (route, payload) => {
     if (prop && routeArgs.length === 2) {
       const result = await w.thirdweb[prop][routeArgs[1]](...parsedArgs);
       return JSON.stringify({ result: result }, bigNumberReplacer);
+    } else if (routeArgs.length === 2) {
+      const result = await w.thirdweb[routeArgs[1]](...parsedArgs);
+      return JSON.stringify({ result: result }, bigNumberReplacer);
     } else {
-      console.error("invalid route", route);
-      return null;
+      throw "Invalid Route";
     }
   }
 
@@ -119,8 +127,7 @@ w.bridge.invoke = async (route, payload) => {
       );
       return JSON.stringify({ result: result }, bigNumberReplacer);
     } else {
-      console.error("invalid route", route);
-      return null;
+      throw "Invalid Route";
     }
   }
 };
