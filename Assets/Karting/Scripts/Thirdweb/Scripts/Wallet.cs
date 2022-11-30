@@ -5,12 +5,16 @@ namespace Thirdweb
     /// <summary>
     /// Connect and Interact with a Wallet.
     /// </summary>
-    public class Wallet
+    public class Wallet : Routable
     {
+        public Wallet() : base($"sdk{subSeparator}wallet")
+        {
+        }
+
         /// <summary>
         /// Connect a user's wallet via browser extension
         /// </summary>
-        public Task<string> Connect() 
+        public Task<string> Connect()
         {
             return Bridge.Connect();
         }
@@ -19,9 +23,9 @@ namespace Thirdweb
         /// Authenticate the user by signing a payload that can be used to securely identify users. See https://portal.thirdweb.com/auth
         /// </summary>
         /// <param name="domain">The domain to authenticate to</param>
-        public async Task<LoginPayload> Authenticate(string domain) 
+        public async Task<LoginPayload> Authenticate(string domain)
         {
-            return await Bridge.InvokeRoute<LoginPayload>("sdk#auth.login", Utils.ToJsonStringArray(domain));
+            return await Bridge.InvokeRoute<LoginPayload>($"sdk{subSeparator}auth{separator}login", Utils.ToJsonStringArray(domain));
         }
 
         /// <summary>
@@ -60,9 +64,9 @@ namespace Thirdweb
         /// <summary>
         /// Prompt the connected wallet to switch to the giiven chainId
         /// </summary>
-        public void SwitchNetwork(int chainId)
+        public async Task SwitchNetwork(int chainId)
         {
-            Bridge.SwitchNetwork(chainId);
+            await Bridge.SwitchNetwork(chainId);
         }
 
         /// <summary>
@@ -95,12 +99,6 @@ namespace Thirdweb
         public async Task<TransactionResult> SendRawTransaction(TransactionRequest transactionRequest)
         {
             return await Bridge.InvokeRoute<TransactionResult>(getRoute("sendRawTransaction"), Utils.ToJsonStringArray(transactionRequest));
-        }
-
-        /// PRIVATE
-
-        private string getRoute(string functionPath) {
-            return "sdk#wallet." + functionPath;
         }
     }
 }

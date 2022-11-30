@@ -22,19 +22,14 @@ public class Web3 : MonoBehaviour
     void OnEnable()
     {
         sdk = new ThirdwebSDK("optimism-goerli");
-        LoadInfo();
     }
 
-    private async void LoadInfo()
+    private void LoadInfo()
     {
-        // If the user has their wallet connected:
-        if (await sdk.wallet.IsConnected())
-        {
-            ShowConnectedState();
-            LoadBalance();
-            DisplayButtonText("0", buyBlueNftButton);
-            DisplayButtonText("1", buyRedNftButton);
-        }
+        ShowConnectedState();
+        LoadBalance();
+        DisplayButtonText("0", buyBlueNftButton);
+        DisplayButtonText("1", buyRedNftButton);
     }
 
     private void ShowConnectedState()
@@ -45,16 +40,19 @@ public class Web3 : MonoBehaviour
 
     public async void ConnectWallet()
     {
-        string address = await sdk.wallet.Connect();
-        int chain = await sdk.wallet.GetChainId();
-        if (chain != 420)
-        {
-            sdk.wallet.SwitchNetwork(420);
-        }
+        await EnsureWalletState();
 
         disconnectedState.SetActive(false);
         connectedState.SetActive(true);
         LoadInfo();
+    }
+
+    public async Task<string> EnsureWalletState()
+    {
+        string address = await sdk.wallet.Connect();
+        await sdk.wallet.SwitchNetwork(420);
+
+        return address;
     }
 
     public async void LoadBalance()
